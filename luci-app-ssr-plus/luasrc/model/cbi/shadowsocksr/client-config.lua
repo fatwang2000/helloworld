@@ -99,6 +99,13 @@ local securitys = {
 "chacha20-poly1305"
 }
 
+local flows = {
+"xtls-rprx-origin",
+"xtls-rprx-origin-udp443",
+"xtls-rprx-direct",
+"xtls-rprx-direct-udp443"
+}
+
 m = Map(shadowsocksr, translate("Edit ShadowSocksR Server"))
 m.redirect = luci.dispatcher.build_url("admin/services/shadowsocksr/servers")
 if m.uci:get(shadowsocksr, sid) ~= "servers" then
@@ -128,6 +135,9 @@ end
 if nixio.fs.access("/usr/sbin/trojan") then
 o:value("trojan", translate("Trojan"))
 end
+if nixio.fs.access("/usr/bin/naive") then
+o:value("naiveproxy", translate("NaiveProxy"))
+end
 if nixio.fs.access("/usr/sbin/redsocks2") then
 o:value("socks5", translate("Socks5"))
 o:value("tun", translate("Network Tunnel"))
@@ -151,6 +161,7 @@ o:depends("type", "ss")
 o:depends("type", "v2ray")
 o:depends("type", "vless")
 o:depends("type", "trojan")
+o:depends("type", "naiveproxy")
 o:depends("type", "socks5")
 
 o = s:option(Value, "server_port", translate("Server Port"))
@@ -161,6 +172,7 @@ o:depends("type", "ss")
 o:depends("type", "v2ray")
 o:depends("type", "vless")
 o:depends("type", "trojan")
+o:depends("type", "naiveproxy")
 o:depends("type", "socks5")
 
 o = s:option(Flag, "auth_enable", translate("Enable Authentication"))
@@ -170,6 +182,7 @@ o:depends("type", "socks5")
 
 o = s:option(Value, "username", translate("Username"))
 o.rmempty = true
+o:depends("type", "naiveproxy")
 o:depends("type", "socks5")
 
 o = s:option(Value, "password", translate("Password"))
@@ -178,6 +191,7 @@ o.rmempty = true
 o:depends("type", "ssr")
 o:depends("type", "ss")
 o:depends("type", "trojan")
+o:depends("type", "naiveproxy")
 o:depends("type", "socks5")
 
 o = s:option(ListValue, "encrypt_method", translate("Encrypt Method"))
@@ -390,6 +404,19 @@ o = s:option(Value, "tls_host", translate("TLS Host"))
 --o:depends("type", "trojan")
 o:depends("tls", "1")
 o.rmempty = true
+
+-- XTLS
+o = s:option(Flag, "xtls", translate("XTLS"))
+o.rmempty = true
+o.default = "0"
+o:depends({type="vless", tls="1"})
+
+-- Flow
+o = s:option(Value, "vless_flow", translate("Flow"))
+for _, v in ipairs(flows) do o:value(v, v) end
+o.rmempty = true
+o.default = "xtls-rprx-origin"
+o:depends("xtls", "1")
 
 -- [[ Mux ]]--
 o = s:option(Flag, "mux", translate("Mux"))
